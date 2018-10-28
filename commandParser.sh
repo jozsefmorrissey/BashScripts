@@ -41,3 +41,5 @@ setFlag () {
   echo $arr
   # echo ${defaults[$first]}
 }
+
+set -- "${@:1:}" "${args[@]}"
