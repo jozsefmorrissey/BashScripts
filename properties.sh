@@ -35,6 +35,30 @@ update () {
   echo "$2=$3" >> "$1"
 }
 
+#
+# each
+# itterates over all arguments
+#   @$1 - command to run for each k: will be replaced by key, v: will be replaced by the keys value
+#   @$2 - filePath
+#
+each () {
+  dirtyKeys=$(grep -oP "^[^\#]*=.*" $1 )
+  for dirtyKey in ${dirtyKeys//\\n/}
+  do
+    key=$(echo $dirtyKey | sed "s/\s*\([^=]*\)=\(.*\)/\1/")
+    key=$(echo $key | sed "s/\./ /g")
+    value=$(echo $dirtyKey | sed "s/\s*\(.*\)=\(.*\)/\2/")
+    if [[ $value =~ ^\#\#REQUEST\#\#\s*$ ]]
+    then
+      read -p "Enter '$key' for your system: " userInput
+      value=$userInput
+    fi
+    cmd=$(echo $2 | sed "s/k:/$key/g")
+    cmd=$(echo $cmd | sed "s/v:/$value/g")
+    $cmd
+  done
+}
+
 # These are the comments
 # That never end
 # It goes on and on my friends
@@ -50,5 +74,8 @@ case "$1" in
   ;;
   update)
     update "$2" "$3" "$4"
+  ;;
+  each)
+    each "$2" "$3"
   ;;
 esac
