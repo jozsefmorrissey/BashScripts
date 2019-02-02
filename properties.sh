@@ -35,33 +35,84 @@ update () {
   echo "$2=$3" >> "$1"
 }
 
+cleanSedReg() {
+  echo "$1" | sed -e 's/[\/&]/\\&/g'
+}
+
+cleanKey() {
+  echo $1 | sed "s/\./_/g"
+}
+
+refReg="\${\(.*\)\?}"
+refReplaceReg() {
+  echo "^\(.*[^\\]\|\)$1\(.*\)$"
+}
+
+refIsolateReg=$(refReplaceReg "$refReg")
+hasRef() {
+  ref=$(echo "$1" | sed "s/$refIsolateReg//g")
+  [ "$ref" == "" ] && echo true
+}
+
+removeRefs() {
+  val=$1
+  while [[ "true" == "$(hasRef $val)" ]]
+  do
+    k=$(echo "$val" | sed "s/$refIsolateReg/\2/g")
+    kId=$(cleanKey "$k")
+    refRepReg=$(refReplaceReg "\${\\($k\\)}")
+    refval=$(cleanSedReg "${props[$kId]}")
+    val=$(echo "$val" | sed "s/$refRepReg/\1$refval\3/g")
+  done
+  echo $val
+}
+
 #
 # each
 # itterates over all arguments
 #   @$1 - command to run for each k: will be replaced by key, v: will be replaced by the keys value
 #   @$2 - filePath
 #
+declare -A props
 each () {
-  dirtyKeys=$(grep -oP "^[^\#]*=.*" $1 )
-  for dirtyKey in ${dirtyKeys//\\n/}
+  lines=$(grep -oP "^[^\#]*=.*" $1 )
+  for line in ${lines//\\n/}
   do
-    key=$(echo $dirtyKey | sed "s/\s*\([^=]*\)=\(.*\)/\1/")
-    key=$(echo $key | sed "s/\./ /g")
-    value=$(echo $dirtyKey | sed "s/\s*\(.*\)=\(.*\)/\2/")
+    line=$(cleanSedReg $line)
+    rawKey=$(echo "$line" | sed "s/\(.*\?\)=.*/\1/g")
+
+    identifier=$(echo "$rawKey" | sed "s/\./ /g")
+    key=$(cleanKey "$rawKey")
+
+    value=$(echo $line | sed "s/\s*\(.*\)=\(.*\)/\2/")
+    value=$(removeRefs "$value")
+    echo $key=$value -$identifier : $line : $rawKey
+    props[$key]=$value
     if [[ $value =~ ^\#\#REQUEST\#\#\s*$ ]]
     then
-      read -p "Enter '$key' for your system: " userInput
+      read -p "Enter '$identifier' for your system: " userInput
       value=$userInput
+      if [ -z $value ]
+      then
+        continue
+      elif [ "$value" == "?" ]
+      then
+        value=
+      fi
     fi
-    cmd=$(echo $2 | sed "s/k:/$key/g")
+    cmd=$(echo $2 | sed "s/k:/$identifier/g")
     cmd=$(echo $cmd | sed "s/v:/$value/g")
     $cmd
+    echo $cmd
+    echo
   done
 }
 
+#
 # These are the comments
 # That never end
 # It goes on and on my friends
+#
 case "$1" in
   edit)
     viewFile "$2"
