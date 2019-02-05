@@ -1,5 +1,6 @@
 
-source ./commandParser.sh
+DEBUG_REL_DIR=$(dirname "${BASH_SOURCE[0]}")
+source $DEBUG_REL_DIR/commandParser.sh
 
 debugLevelId=${flags['d']}
 
@@ -32,5 +33,3 @@ debug () {
     (>&2 echo "[$levelId] $callerInfo - $2")
   fi
 }
-
-debug fatal "message"

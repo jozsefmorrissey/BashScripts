@@ -1,5 +1,6 @@
 #!/bin/bash
-
+PROPERTIES_REL_DIR=$(dirname "${BASH_SOURCE[0]}")
+source $PROPERTIES_REL_DIR/debugLogger.sh
 # All functions will deal with the same following properties
 #   @$1 - String Id
 #   @$2 - Property Key
@@ -60,11 +61,16 @@ removeRefs() {
   do
     k=$(echo "$val" | sed "s/$refIsolateReg/\2/g")
     kId=$(cleanKey "$k")
+    debug info "Removed - ${kId}"
     refRepReg=$(refReplaceReg "\${\\($k\\)}")
     refval=$(cleanSedReg "${props[$kId]}")
     val=$(echo "$val" | sed "s/$refRepReg/\1$refval\3/g")
   done
   echo $val
+}
+
+cleanComments() {
+  grep -oP "^[^#]{1,}=[^#]*" ./global.properties
 }
 
 #
@@ -79,6 +85,7 @@ each () {
   for line in ${lines//\\n/}
   do
     line=$(cleanSedReg $line)
+    debug info "Processing $line"
     rawKey=$(echo "$line" | sed "s/\(.*\?\)=.*/\1/g")
 
     identifier=$(echo "$rawKey" | sed "s/\./ /g")
@@ -86,7 +93,6 @@ each () {
 
     value=$(echo $line | sed "s/\s*\(.*\)=\(.*\)/\2/")
     value=$(removeRefs "$value")
-    echo $key=$value -$identifier : $line : $rawKey
     props[$key]=$value
     if [[ $value =~ ^\#\#REQUEST\#\#\s*$ ]]
     then
@@ -100,11 +106,11 @@ each () {
         value=
       fi
     fi
+    debug info "Final - $key=$identifier"
     cmd=$(echo $2 | sed "s/k:/$identifier/g")
     cmd=$(echo $cmd | sed "s/v:/$value/g")
+    debug info "Command exicuted '$cmd'"
     $cmd
-    echo $cmd
-    echo
   done
 }
 
