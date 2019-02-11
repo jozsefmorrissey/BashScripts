@@ -1,0 +1,16 @@
+BashScripts
+confidentalInfo.sh
+debugLogger.sh
+Dockerfile
+info
+installGlobal.sh
+ipConfig.json
+jasypt-1.9.2
+log.txt
+node_modules
+package.json
+password-server.js
+passwordServer.properties
+public
+README.md
+run.sh

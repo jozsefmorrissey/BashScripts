@@ -5,17 +5,24 @@ source $PROPERTIES_REL_DIR/debugLogger.sh
 #   @$1 - String Id
 #   @$2 - Property Key
 
+cleanFile() {
+  sed -i '/^[[:space:]]*$/d' $1
+  sort $1 > ${1}_ && cp ${1}_ $1 && rm ${1}_
+}
+
 #
 # getValue
 #   @$1 - property name
 #   @$2 - filePath
 #
 getValue() {
+  debug trace "$(sepArguments "Argurments: " ", " "$@")"
   value=$(grep -oP "$1=.*" $2 | sed "s/.*=//g")
-  echo $1 $2
   if [ ! -z "$value" ]
   then
     echo $value
+  else
+    echo null
   fi
 }
 
@@ -34,6 +41,7 @@ update () {
   echo old "$old"
   sed -i "s/$2=.*//g" $1
   echo "$2=$3" >> "$1"
+  cleanFile $1
 }
 
 cleanSedReg() {

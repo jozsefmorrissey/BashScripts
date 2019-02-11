@@ -33,3 +33,15 @@ debug () {
     (>&2 echo "[$levelId] $callerInfo - $2")
   fi
 }
+
+sepArguments() {
+  argStr="$1"
+  seperator="$2"
+  shift
+  shift
+  for arg in "$@"
+  do
+    argStr+="${arg}$seperator"
+  done
+  echo $argStr
+}

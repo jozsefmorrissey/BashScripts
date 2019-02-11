@@ -25,21 +25,21 @@ do
 done
 
 
-setFlag () {
-  first=$1
-  while [ "$1" ];
-  do
-    if [ ${flags[$1]} ]
-    then
-      echo ${flags[$1]}
-      return
-    fi
-    shift
-  done
-
-  eval "arr=\${$first[$type]}"
-  echo $arr
-  # echo ${defaults[$first]}
-}
+# setFlag () {
+#   first=$1
+#   while [ "$1" ];
+#   do
+#     if [ ${flags[$1]} ]
+#     then
+#       echo ${flags[$1]}
+#       return
+#     fi
+#     shift
+#   done
+#
+#   eval "arr=\${$first[$type]}"
+#   echo $arr
+#   # echo ${defaults[$first]}
+# }
 
 set -- "${@:1:}" "${args[@]}"
