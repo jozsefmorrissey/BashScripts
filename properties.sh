@@ -21,8 +21,6 @@ getValue() {
   if [ ! -z "$value" ]
   then
     echo $value
-  else
-    echo null
   fi
 }
 
@@ -65,6 +63,7 @@ hasRef() {
 
 removeRefs() {
   val=$1
+  debug debug "value $val"
   while [[ "true" == "$(hasRef $val)" ]]
   do
     k=$(echo "$val" | sed "s/$refIsolateReg/\2/g")
@@ -72,6 +71,7 @@ removeRefs() {
     debug info "Removed - ${kId}"
     refRepReg=$(refReplaceReg "\${\\($k\\)}")
     refval=$(cleanSedReg "${props[$kId]}")
+    debug debug "$val"
     val=$(echo "$val" | sed "s/$refRepReg/\1$refval\3/g")
   done
   echo $val
@@ -100,7 +100,10 @@ each () {
     key=$(cleanKey "$rawKey")
 
     value=$(echo $line | sed "s/\s*\(.*\)=\(.*\)/\2/")
-    value=$(removeRefs "$value")
+    if [ ! -z "$value" ]
+    then
+      value=$(removeRefs "$value")
+    fi
     props[$key]=$value
     if [[ $value =~ ^\#\#REQUEST\#\#\s*$ ]]
     then

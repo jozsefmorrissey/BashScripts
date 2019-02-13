@@ -27,7 +27,7 @@ debugLevel=${loggingLevels["$debugLevelId"]}
 debug () {
   levelId=$(echo "$1" | tr '[:upper:]' '[:lower:]')
   level=${loggingLevels["$levelId"]}
-  if [ $level -le $debugLevel ]
+  if [ ! -z $level ] && [ ! -z $debugLevel ] && [ $level -le $debugLevel ]
   then
     callerInfo=$(caller 0)
     (>&2 echo "[$levelId] $callerInfo - $2")
@@ -43,5 +43,7 @@ sepArguments() {
   do
     argStr+="${arg}$seperator"
   done
-  echo $argStr
+  end=${#seperator}
+  let "end*=-1"
+  echo ${argStr:0:$end}
 }
