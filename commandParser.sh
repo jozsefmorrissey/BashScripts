@@ -24,6 +24,23 @@ do
     fi
 done
 
+flagStr() {
+  str=''
+  for i in "${!flags[@]}"
+  do
+    str+="-$i ${flags[$i]} "
+  done
+  echo $str
+}
+
+boolStr() {
+  str=''
+  for i in "${!booleans[@]}"
+  do
+    str+="-$i "
+  done
+  echo $str
+}
 
 # setFlag () {
 #   first=$1

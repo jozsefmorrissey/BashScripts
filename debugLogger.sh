@@ -30,7 +30,7 @@ debug () {
   if [ ! -z $level ] && [ ! -z $debugLevel ] && [ $level -le $debugLevel ]
   then
     callerInfo=$(caller 0)
-    (>&2 echo "[$levelId] $callerInfo - $2")
+    (>&2 echo -e "[$levelId] $callerInfo - $2")
   fi
 }
 

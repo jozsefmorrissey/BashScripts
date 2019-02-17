@@ -17,7 +17,7 @@ cleanFile() {
 #
 getValue() {
   debug trace "$(sepArguments "Argurments: " ", " "$@")"
-  value=$(grep -oP "$1=.*" $2 | sed "s/.*=//g")
+  value=$(grep -oP "$1=.*" $2 | sed "s/^[^=]*\?=//")
   if [ ! -z "$value" ]
   then
     echo $value
@@ -43,7 +43,9 @@ update () {
 }
 
 cleanSedReg() {
+  debug trace "$(sepArguments "Argurments: " ", " "$@")"
   echo "$1" | sed -e 's/[\/&]/\\&/g'
+  debug info "Cleaned: $(echo "$1" | sed -e 's/[\/&]/\\&/g')"
 }
 
 cleanKey() {
@@ -62,16 +64,16 @@ hasRef() {
 }
 
 removeRefs() {
+  debug trace "$(sepArguments "Argurments: " ", " "$@")"
   val=$1
   debug debug "value $val"
   while [[ "true" == "$(hasRef $val)" ]]
   do
     k=$(echo "$val" | sed "s/$refIsolateReg/\2/g")
     kId=$(cleanKey "$k")
-    debug info "Removed - ${kId}"
     refRepReg=$(refReplaceReg "\${\\($k\\)}")
     refval=$(cleanSedReg "${props[$kId]}")
-    debug debug "$val"
+    debug info "val: $val\tRemoved - ${kId}\trefRepReg: $refRepReg\trefval: $refval\trawRefVal: ${props[$kId]}"
     val=$(echo "$val" | sed "s/$refRepReg/\1$refval\3/g")
   done
   echo $val
@@ -94,7 +96,7 @@ each () {
   do
     line=$(cleanSedReg $line)
     debug info "Processing $line"
-    rawKey=$(echo "$line" | sed "s/\(.*\?\)=.*/\1/g")
+    rawKey=$(echo "$line" | sed "s/\(^[^=]*\?\)=.*/\1/g")
 
     identifier=$(echo "$rawKey" | sed "s/\./ /g")
     key=$(cleanKey "$rawKey")
@@ -105,6 +107,7 @@ each () {
       value=$(removeRefs "$value")
     fi
     props[$key]=$value
+    debug info "$key=$value"
     if [[ $value =~ ^\#\#REQUEST\#\#\s*$ ]]
     then
       read -p "Enter '$identifier' for your system: " userInput
@@ -117,7 +120,7 @@ each () {
         value=
       fi
     fi
-    debug info "Final - $key=$identifier"
+    debug info "Final Identifier - $key=$identifier"
     cmd=$(echo $2 | sed "s/k:/$identifier/g")
     cmd=$(echo $cmd | sed "s/v:/$value/g")
     debug info "Command exicuted '$cmd'"
@@ -138,7 +141,7 @@ case "$1" in
     cat "$2"
   ;;
   value)
-    getValue "$2" "$3"
+    getValue "$3" "$2"
   ;;
   update)
     update "$2" "$3" "$4"

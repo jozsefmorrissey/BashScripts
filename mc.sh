@@ -14,11 +14,26 @@ templateFile="templates.properties"
 originDirFile="origin.properties"
 pidFile="pid.properties"
 
-if [ -z "${flags[name]}" ] && [ "$1" != "install" ] && [ "$1" != "templates" ]
+name=$1
+shift
+
+if [ -z "$name" ] && [ "$1" != "install" ] && [ "$1" != "templates" ] && [ "$1" != "reset"]
 then
   echo "-name Must be defined"
   exit
 fi
+
+list_descendants ()
+{
+  local children=$(ps -o pid= --ppid "$1")
+
+  for pid in $children
+  do
+    list_descendants "$pid"
+  done
+
+  echo "$children"
+}
 
 splitStringDelimiter() {
   debug trace "$(sepArguments "Argurments: " ", " "$@")"
@@ -35,7 +50,7 @@ splitStringDelimiter() {
 
 save() {
   debug trace "$(sepArguments "Argurments: " ", " "$@")"
-  ${mcRelDir}/properties.sh update "$mcDataDir/$2" "${flags[name]}" "$1" -d ${flags[d]}
+  ${mcRelDir}/properties.sh update "$mcDataDir/$2" "$name" "$1" -d ${flags[d]}
 }
 
 getPids() {
@@ -49,6 +64,7 @@ getPids() {
 }
 
 clearPids() {
+  debug trace
   save "" "$pidFile"
 }
 
@@ -60,7 +76,7 @@ appendPid() {
 }
 
 getLog() {
-  echo $mcDataDir/logs/${flags[name]}.log
+  echo $mcDataDir/logs/$name.log
 }
 
 getDirectory() {
@@ -69,7 +85,7 @@ getDirectory() {
 
 getValue() {
   debug trace "$(sepArguments "Argurments: " ", " "$@")"
-  ${mcRelDir}/properties.sh value "${flags[name]}" "$mcDataDir/$1" -d ${flags[d]}
+  ${mcRelDir}/properties.sh value "$mcDataDir/$1" "$name" -d ${flags[d]}
 }
 
 runWithPid() {
@@ -83,16 +99,26 @@ runWithTargetTerm() {
   target_term run $id "$@"
 }
 
+killTargetTerm() {
+  debug trace
+  termId=$(getValue $processFile)
+  debug debug termId: $termId
+  if [ ! -z "$termId" ]
+  then
+    debug debug "TermID: $termId"
+    target_term kill $termId
+    save "" $processFile
+  fi
+}
+
 init() {
   debug trace
-  if [ "${booleans[t]}" == "true" ]
+  termId=$(getValue $processFile)
+  if [ "${booleans[t]}" == "true" ] && [ -z "$termId" ]
   then
     target_term add 1
-    count=$(target_term count)
-    echo $count
-    save $count $processFile
-  else
-    echo bash cmd
+    termId=$(target_term count)
+    save $termId $processFile
   fi
 }
 
@@ -100,11 +126,14 @@ init() {
 pidReg='^[0-9]{1,}$'
 run() {
   debug trace "$(sepArguments "Argurments: " ", " "$@")"
-  id=$(getValue $processFile)
-  echo id: $id
-  if [[ $id =~ $pidReg ]]
+  init
+  if [ ! -z "$termId" ]
   then
-    runWithTargetTerm $id "$@"
+    echo termId: $termId
+    cd=$(getDirectory)
+    runWithTargetTerm $termId "cd $cd"
+    echo runWithTargetTerm $termId "$@"
+    runWithTargetTerm $termId "$@"
   else
     echo "$(getDirectory)> $@" &>> $(getLog)
     ogDir=$(pwd)
@@ -112,7 +141,7 @@ run() {
     $@ &>> "$(getLog)" &
     cd "$ogDir"
     pid=$!
-    debug debug "Process Name: ${flags[name]} PID:$pid"
+    debug debug "Process Name: $name PID:$pid"
     appendPid $pid
   fi
 }
@@ -124,11 +153,12 @@ watch() {
 
 KILL() {
   debug trace
+  killTargetTerm
   getPids
   for pid in ${array[@]}
   do
     echo $pid
-    kill $pid
+    kill $(list_descendants $pid)
   done
   clearPids
 }
@@ -141,7 +171,7 @@ template() {
 
 restart() {
   debug trace
-  kill
+  KILL
   start
 }
 
@@ -158,8 +188,16 @@ start() {
 }
 
 clear() {
+  debug trace
   echo "" &> $(getLog)
 }
+
+reset() {
+  debug trace
+  echo "$mcDataDir/$processFile"
+  echo "" &> "$mcDataDir/$processFile"
+}
+
 
 CD() {
   debug debug "$(sepArguments "Argurments: " ", " "$@")"
@@ -197,10 +235,18 @@ templates() {
   ${mcRelDir}/properties.sh each "$mcDataDir/$templateFile" 'echo k:' -d ${flags[d]}
 }
 
-cmd=$1
-shift
-if [ "$cmd" == "cd" ] || [ "$cmd" == "kill" ] || [ "$cmd" == "ls" ]
+if [ -z "$1" ]
 then
-  cmd=$(echo "$cmd" | tr a-z A-Z)
+  $name
+else
+  while [ ! -z "$1" ]
+  do
+    cmd=$1
+    shift
+    if [ "$cmd" == "cd" ] || [ "$cmd" == "kill" ] || [ "$cmd" == "ls" ]
+    then
+      cmd=$(echo "$cmd" | tr a-z A-Z)
+    fi
+    $cmd "$@"
+  done
 fi
-$cmd "$@"

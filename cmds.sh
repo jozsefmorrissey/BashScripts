@@ -15,7 +15,7 @@ getFileName () {
 #
 getValue() {
   filePath=$(getFileName $1)
-  properties.sh value $2 $filePath
+  properties.sh value $1 $2
 }
 
 viewFile() {
