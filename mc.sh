@@ -223,6 +223,8 @@ CD() {
 
 install() {
   echo "bash $mcRelDir/mc.sh \"\$@\"" > /usr/bin/mc
+  sudo chmod +x /usr/bin/mc
+  mkdir -p ~/.opsc/mc
 }
 
 LS() {
