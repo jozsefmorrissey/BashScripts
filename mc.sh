@@ -241,7 +241,7 @@ else
   # while [ ! -z "$1" ]
   # do
     cmd=$1
-    # shift
+    shift
     if [ "$cmd" == "cd" ] || [ "$cmd" == "kill" ] || [ "$cmd" == "ls" ]
     then
       cmd=$(echo "$cmd" | tr a-z A-Z)
