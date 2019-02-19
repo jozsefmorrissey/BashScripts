@@ -10,8 +10,8 @@ application = "gnome-terminal"
 #---
 
 option = sys.argv[1]
-data = os.environ["HOME"]+"/.term_list"
-data = os.environ["HOME"]+"/.term_pid"
+data = os.environ["HOME"]+"/.opsc/target_term/.term_list"
+pidDir = os.environ["HOME"]+"/.opsc/target_term/pids/"
 
 def current_windows():
     w_list = subprocess.check_output(["wmctrl", "-lp"]).decode("utf-8")
@@ -33,7 +33,6 @@ def arr_windows(n):
         add = [w for w in w_count2 if not w in w_count1]
         [called.append(w.split()[0]) for w in add if not w in called]
         w_count1 = w_count2
-#target_term run 11 $(confidentalInfo.sh dir)/BashScripts/properties.sh update /.term_pid 11 86753099
     return called
 
 def run_intterm(w, command):
@@ -41,15 +40,31 @@ def run_intterm(w, command):
     subprocess.call(["xdotool", "type", command+"\n"])
 
 
-def killProcess(proc_pid):
-    process = psutil.Process(proc_pid)
-    process.kill()
+def killProcess(id):
+    try:
+        pidFile = pidDir + str(id)
+        pid = open(pidFile).read().strip()
+        print("Killing Process: " +  pid)
+        w_count2 = arr_windows(1)
+        t_term = w_count2[0]
+        run_intterm(t_term, "kill -9 " + pid)
+        run_intterm(t_term, "rm " + pidFile)
+        run_intterm(t_term, "exit")
+        time.sleep(1)
+    except:
+        print("No Process to Kill.")
 
 def addWindows():
     n = int(sys.argv[2])
     new = arr_windows(n)
+    index = 0
+    ct = len(open(data).read().splitlines())
     for w in new:
+        index += 1
         open(data, "a").write(w+"\n")
+        id = str(ct + index)
+        print("Process " + id + " Started")
+        run_intterm(w, "echo $$ >" + pidDir + id)
 
 # ----------------------------- Command functions ------------------------------
 def pid():
@@ -66,6 +81,7 @@ def add():
     addWindows()
 
 def set():
+    killAll()
     open(data, "w").write("")
     addWindows()
 
@@ -75,11 +91,12 @@ def run():
     run_intterm(t_term, command)
 
 def kill():
-    print("process: " +  sys.argv[2])
-    w = open(data).read().splitlines()[int(sys.argv[2])-1]
-    subprocess.call(["xdotool", "windowfocus", "--sync", w])
-    subprocess.call(["xdotool", "getwindowpid", w])
+    killProcess(sys.argv[2])
 
+def killAll():
+    files=os.listdir(pidDir)
+    for file in files:
+        killProcess(file)
 
 def install():
     password = getpass.getpass("Admin Password: ");
@@ -89,10 +106,8 @@ def install():
     run_intterm(t_term, password)
     cmd="python " + os.path.abspath(__file__) + ' "$@"';
     run_intterm(t_term, "echo -e '#!/usr/bin/env bash\n" + cmd + "' | sudo tee /bin/target_term")
-    # run_intterm(t_term, "sudo sh -c 'echo -e \'#!/usr/bin/env bash\necho \"hello target\"\' > /bin/target_term'")
-    # run_intterm(t_term, "sudo cp ./target_term.py /bin/target_term")
-    run_intterm(t_term, "sudo chmod +x /bin/target_term")
-    time.sleep(30)
+    run_intterm(t_term, "mkdir -p " + pidDir)
+    time.sleep(10)
     run_intterm(t_term, "exit")
 
 def count():

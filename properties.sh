@@ -36,7 +36,7 @@ viewFile() {
 #
 update () {
   old=$(getValue "$2" "$1")
-  echo old "$old"
+  debug debug old "$old"
   sed -i "s/$2=.*//g" $1
   echo "$2=$3" >> "$1"
   cleanFile $1

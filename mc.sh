@@ -129,10 +129,9 @@ run() {
   init
   if [ ! -z "$termId" ]
   then
-    echo termId: $termId
     cd=$(getDirectory)
     runWithTargetTerm $termId "cd $cd"
-    echo runWithTargetTerm $termId "$@"
+    debug debug runWithTargetTerm $termId "$@"
     runWithTargetTerm $termId "$@"
   else
     echo "$(getDirectory)> $@" &>> $(getLog)
@@ -158,7 +157,8 @@ KILL() {
   for pid in ${array[@]}
   do
     echo $pid
-    kill $(list_descendants $pid)
+    echo kill -9 $(list_descendants $pid) $pid
+    kill -9 $(list_descendants $pid) $pid
   done
   clearPids
 }
