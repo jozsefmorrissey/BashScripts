@@ -224,7 +224,8 @@ CD() {
 install() {
   echo "bash $mcRelDir/mc.sh \"\$@\"" > /usr/bin/mc
   sudo chmod +x /usr/bin/mc
-  mkdir -p ~/.opsc/mc
+  mkdir -p ${mcDataDir}
+  touch ${mcDataDir}/processes.properties ${mcDataDir}/directories.properties
 }
 
 LS() {
