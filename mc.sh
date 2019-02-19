@@ -16,6 +16,7 @@ pidFile="pid.properties"
 
 name=$1
 shift
+echo Name: $name
 
 if [ -z "$name" ] && [ "$1" != "install" ] && [ "$1" != "templates" ] && [ "$1" != "reset"]
 then
@@ -86,11 +87,6 @@ getDirectory() {
 getValue() {
   debug trace "$(sepArguments "Argurments: " ", " "$@")"
   ${mcRelDir}/properties.sh value "$mcDataDir/$1" "$name" -d ${flags[d]}
-}
-
-runWithPid() {
-  debug trace
-  kill -0 $pid
 }
 
 runWithTargetTerm() {
@@ -242,14 +238,14 @@ if [ -z "$1" ]
 then
   $name
 else
-  while [ ! -z "$1" ]
-  do
+  # while [ ! -z "$1" ]
+  # do
     cmd=$1
-    shift
+    # shift
     if [ "$cmd" == "cd" ] || [ "$cmd" == "kill" ] || [ "$cmd" == "ls" ]
     then
       cmd=$(echo "$cmd" | tr a-z A-Z)
     fi
     $cmd "$@"
-  done
+  # done
 fi
