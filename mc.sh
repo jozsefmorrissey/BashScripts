@@ -37,7 +37,7 @@ list_descendants ()
 }
 
 splitStringDelimiter() {
-  debug trace "$(sepArguments "Argurments: " ", " "$@")"
+  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   str="$1"
   delimiter=$2
   s=$str$delimiter
@@ -50,7 +50,7 @@ splitStringDelimiter() {
 }
 
 save() {
-  debug trace "$(sepArguments "Argurments: " ", " "$@")"
+  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   ${mcRelDir}/properties.sh update "$mcDataDir/$2" "$name" "$1" -d ${flags[d]}
 }
 
@@ -65,7 +65,7 @@ getPids() {
 }
 
 clearPids() {
-  debug trace
+  Logger trace
   save "" "$pidFile"
 }
 
@@ -85,7 +85,7 @@ getDirectory() {
 }
 
 getValue() {
-  debug trace "$(sepArguments "Argurments: " ", " "$@")"
+  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   ${mcRelDir}/properties.sh value "$mcDataDir/$1" "$name" -d ${flags[d]}
 }
 
@@ -96,19 +96,19 @@ runWithTargetTerm() {
 }
 
 killTargetTerm() {
-  debug trace
+  Logger trace
   termId=$(getValue $processFile)
-  debug debug termId: $termId
+  Logger debug termId: $termId
   if [ ! -z "$termId" ]
   then
-    debug debug "TermID: $termId"
+    Logger debug "TermID: $termId"
     target_term kill $termId
     save "" $processFile
   fi
 }
 
 init() {
-  debug trace
+  Logger trace
   termId=$(getValue $processFile)
   if [ "${booleans[t]}" == "true" ] && [ -z "$termId" ]
   then
@@ -121,13 +121,13 @@ init() {
 # ----------------------------- Command functions ------------------------------
 pidReg='^[0-9]{1,}$'
 run() {
-  debug trace "$(sepArguments "Argurments: " ", " "$@")"
+  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   init
   if [ ! -z "$termId" ]
   then
     cd=$(getDirectory)
     runWithTargetTerm $termId "cd $cd"
-    debug debug runWithTargetTerm $termId "$@"
+    Logger debug runWithTargetTerm $termId "$@"
     runWithTargetTerm $termId "$@"
   else
     echo "$(getDirectory)> $@" &>> $(getLog)
@@ -136,18 +136,18 @@ run() {
     $@ &>> "$(getLog)" &
     cd "$ogDir"
     pid=$!
-    debug debug "Process Name: $name PID:$pid"
+    Logger debug "Process Name: $name PID:$pid"
     appendPid $pid
   fi
 }
 
 watch() {
-  debug trace
+  Logger trace
   less +F "$(getLog)"
 }
 
 KILL() {
-  debug trace
+  Logger trace
   killTargetTerm
   getPids
   for pid in ${array[@]}
@@ -160,19 +160,19 @@ KILL() {
 }
 
 template() {
-  debug trace "$(sepArguments "Argurments: " ", " "$@")"
+  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   save "$(realpath "${flags[od]}")" "$originDirFile"
   save "$(sepArguments "" "$cmdSep" "$@")" "$templateFile"
 }
 
 restart() {
-  debug trace
+  Logger trace
   KILL
   start
 }
 
 start() {
-  debug trace "$(sepArguments "Argurments: " ", " "$@")"
+  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   string=$(getValue $templateFile)
   splitStringDelimiter "$string" "$cmdSep"
   od=$(getValue $originDirFile)
@@ -184,21 +184,21 @@ start() {
 }
 
 clear() {
-  debug trace
+  Logger trace
   echo "" &> $(getLog)
 }
 
 reset() {
-  debug trace
+  Logger trace
   echo "$mcDataDir/$processFile"
   echo "" &> "$mcDataDir/$processFile"
 }
 
 
 CD() {
-  debug debug "$(sepArguments "Argurments: " ", " "$@")"
+  Logger debug "$(sepArguments "Argurments: " ", " "$@")"
   currDir=$(getDirectory)
-  debug debug "curr: \"$currDir\""
+  Logger debug "curr: \"$currDir\""
   if [ "${1:0:1}" == "~" ]
   then
     newDir=$(realpath "$HOME/${1:1}")
@@ -210,10 +210,10 @@ CD() {
   fi
   if [ -d "$newDir" ]
   then
-    debug debug "New Dir: $newDir"
+    Logger debug "New Dir: $newDir"
     save "$newDir" "$dirFile"
   else
-    debug debug "Not a Directory $newDir"
+    Logger debug "Not a Directory $newDir"
   fi
 }
 
@@ -231,7 +231,7 @@ LS() {
 }
 
 templates() {
-  ${mcRelDir}/properties.sh each "$mcDataDir/$templateFile" 'echo k:' -d ${flags[d]}
+  ${mcRelDir}/properties.sh each 'echo k:' "$mcDataDir/$templateFile" -d ${flags[d]}
 }
 
 if [ -z "$1" ]

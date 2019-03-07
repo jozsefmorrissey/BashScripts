@@ -24,7 +24,7 @@ loggingLevels["all"]=7
 
 debugLevel=${loggingLevels["$debugLevelId"]}
 
-debug () {
+Logger () {
   levelId=$(echo "$1" | tr '[:upper:]' '[:lower:]')
   level=${loggingLevels["$levelId"]}
   if [ ! -z $level ] && [ ! -z $debugLevel ] && [ $level -le $debugLevel ]
