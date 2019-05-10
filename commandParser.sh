@@ -1,5 +1,17 @@
-declare -A flags
-declare -A booleans
+
+if [ "$1" == '-scope' ]
+then
+  flagArrayName=$2Flags
+  booleanArrayName=$2Booleans
+  shift
+  shift
+else
+  flagArrayName=flags
+  booleanArrayName=booleans
+fi
+eval declare -A $flagArrayName
+eval declare -A $booleanArrayName
+
 args=()
 
 while [ "$1" ];
@@ -12,10 +24,10 @@ do
       if [ -z "$1" ] || [ "${1:0:1}" == "-" ] || [ "${rev:0:1}" == ":" ]
       then
         bool=$(echo ${arg:1} | sed s/://g)
-        booleans[$bool]=true
+        eval $booleanArrayName[\$bool]=true
       else
         value=$1
-        flags[${arg:1}]=$value
+        eval $flagArrayName[\${arg:1}]=\$value
         shift
       fi
     else
@@ -26,37 +38,26 @@ done
 
 flagStr() {
   str=''
-  for i in "${!flags[@]}"
+  for i in "$(eval echo \${\!$flagArrayName[@]})"
   do
-    str+="-$i ${flags[$i]} "
+    if [ -n "$i" ]
+    then
+      str+="-$i $(eval echo \${$flagArrayName[$i]}) "
+    fi
   done
   echo $str
 }
 
 boolStr() {
   str=''
-  for i in "${!booleans[@]}"
+  for i in "$(eval echo \${\!$booleanArrayName[@]})"
   do
-    str+="-$i "
+    if [ -n "$i" ]
+    then
+      str+="-$i "
+    fi
   done
   echo $str
 }
-
-# setFlag () {
-#   first=$1
-#   while [ "$1" ];
-#   do
-#     if [ ${flags[$1]} ]
-#     then
-#       echo ${flags[$1]}
-#       return
-#     fi
-#     shift
-#   done
-#
-#   eval "arr=\${$first[$type]}"
-#   echo $arr
-#   # echo ${defaults[$first]}
-# }
 
 set -- "${@:1:}" "${args[@]}"
