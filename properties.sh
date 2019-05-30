@@ -17,7 +17,8 @@ cleanFile() {
 #
 getValue() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
-  value=$(grep -oP "$1=.*" $2 | sed "s/^[^=]*\?=//")
+  Logger trace "$(grep -oP ".*$1=.*" $2)"
+  value=$(grep -oP "^$1=.*" $2 | sed "s/[^=]*\?=//")
   if [ ! -z "$value" ]
   then
     echo $value
