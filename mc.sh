@@ -14,11 +14,14 @@ templateFile="templates.properties"
 originDirFile="origin.properties"
 pidFile="pid.properties"
 
+cmd=$1
+shift
 name=$1
 shift
+
 echo Name: $name
 
-if [ -z "$name" ] && [ "$1" != "install" ] && [ "$1" != "templates" ] && [ "$1" != "reset"]
+if [ -z "$name" ] && [ "$cmd" != "install" ] && [ "$cmd" != "templates" ] && [ "$cmd" != "reset"]
 then
   echo "-name Must be defined"
   exit
@@ -119,6 +122,22 @@ init() {
 }
 
 # ----------------------------- Command functions ------------------------------
+help() {
+  echo 'Run commands in a named shell use -t at end, or -t: anywhere to open a terminal.'
+  echo 'mc run $NAME [COMMANDS]'
+  echo 'mc watch $NAME'
+  echo 'mc kill $NAME'
+  echo 'mc restart $NAME'
+  echo 'mc start $NAME'
+  echo 'mc clear $NAME'
+  echo 'mc reset $NAME'
+  echo 'mc ls $NAME'
+  echo 'mc cd $NAME'
+  echo 'mc templates'
+  echo 'mc template -od $OriginDirectory $NAME [COMMANDS]'
+  echo 'mc install'
+}
+
 pidReg='^[0-9]{1,}$'
 run() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
@@ -231,21 +250,17 @@ LS() {
 }
 
 templates() {
-  ${mcRelDir}/properties.sh each 'echo k:' "$mcDataDir/$templateFile" -d ${flags[d]}
+  # ${mcRelDir}/properties.sh each 'echo -e k:\n' "$mcDataDir/$templateFile" -d ${flags[d]}
+  cat "$mcDataDir/$templateFile"
 }
 
-if [ -z "$1" ]
+if [ -z "$cmd" ]
 then
-  $name
+  help
 else
-  # while [ ! -z "$1" ]
-  # do
-    cmd=$1
-    shift
-    if [ "$cmd" == "cd" ] || [ "$cmd" == "kill" ] || [ "$cmd" == "ls" ]
-    then
-      cmd=$(echo "$cmd" | tr a-z A-Z)
-    fi
-    $cmd "$@"
-  # done
+  if [ "$cmd" == "cd" ] || [ "$cmd" == "kill" ] || [ "$cmd" == "ls" ]
+  then
+    cmd=$(echo "$cmd" | tr a-z A-Z)
+  fi
+  $cmd "$@"
 fi
