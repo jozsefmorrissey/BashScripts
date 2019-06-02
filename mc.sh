@@ -155,7 +155,6 @@ run() {
     cd "$(getDirectory)"
     Logger info "Exicute Cmd: $@ &"
     eval "$@ &>> \"$(getLog)\" &"
-    read  -n 1 -p "Input Selection:" mainmenuinput
     cd "$ogDir"
     pid=$!
     Logger debug "Process Name: $name PID:$pid"
