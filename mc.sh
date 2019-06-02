@@ -44,12 +44,12 @@ splitStringDelimiter() {
   str="$1"
   delimiter=$2
   s=$str$delimiter
-  array=();
+  eval "$3=()"
+  Logger debug "Array name: $3"
   while [[ $s ]]; do
-      array+=( "${s%%"$delimiter"*}" );
+      eval "$3+=( \"${s%%"$delimiter"*}\" );"
       s=${s#*"$delimiter"};
   done;
-  declare -p array
 }
 
 save() {
@@ -61,9 +61,9 @@ getPids() {
   pidStr=$(getValue "$pidFile")
   if [ -z "$pidStr" ]
   then
-    array=()
+    pidArray=()
   else
-    splitStringDelimiter $pidStr ","
+    splitStringDelimiter $pidStr "," "pidArray"
   fi
 }
 
@@ -74,7 +74,7 @@ clearPids() {
 
 appendPid() {
   getPids
-  pids=$(printf "%s," "${array[@]}")
+  pids=$(printf "%s," "${pidArray[@]}")
   pids+=$1
   save "$pids" "$pidFile"
 }
@@ -141,7 +141,8 @@ help() {
 pidReg='^[0-9]{1,}$'
 run() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
-  init
+  # init
+  Logger debug "TermID: $termId"
   if [ ! -z "$termId" ]
   then
     cd=$(getDirectory)
@@ -152,7 +153,9 @@ run() {
     echo "$(getDirectory)> $@" &>> $(getLog)
     ogDir=$(pwd)
     cd "$(getDirectory)"
-    $@ &>> "$(getLog)" &
+    Logger info "Exicute Cmd: $@ &"
+    eval "$@ &>> \"$(getLog)\" &"
+    read  -n 1 -p "Input Selection:" mainmenuinput
     cd "$ogDir"
     pid=$!
     Logger debug "Process Name: $name PID:$pid"
@@ -169,10 +172,9 @@ KILL() {
   Logger trace
   killTargetTerm
   getPids
-  for pid in ${array[@]}
+  for pid in ${pidArray[@]}
   do
-    echo $pid
-    echo kill -9 $(list_descendants $pid) $pid
+    Logger info "kill -9 $(list_descendants $pid) $pid"
     kill -9 $(list_descendants $pid) $pid
   done
   clearPids
@@ -193,12 +195,13 @@ restart() {
 start() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   string=$(getValue $templateFile)
-  splitStringDelimiter "$string" "$cmdSep"
+  splitStringDelimiter "$string" "$cmdSep" "cmds"
   od=$(getValue $originDirFile)
   CD "$od"
-  for i in "${!array[@]}"
+  for i in "${!cmds[@]}"
   do
-      run "${array[i]}"
+    Logger debug "Command Loop: ${cmds[i]}"
+    run "${cmds[i]}"
   done
 }
 
