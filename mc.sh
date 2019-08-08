@@ -141,7 +141,7 @@ help() {
 pidReg='^[0-9]{1,}$'
 run() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
-  # init
+  init
   Logger debug "TermID: $termId"
   if [ ! -z "$termId" ]
   then
