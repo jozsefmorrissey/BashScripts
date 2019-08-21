@@ -8,7 +8,7 @@ source ${httpSrouteDir}/commandParser.sh;
 
 iptables -t mangle -A PREROUTING -p tcp --dport 80 -j MARK --set-mark 1
 iptables -t mangle -A PREROUTING -p tcp --dport 443 -j MARK --set-mark 1
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port ${flags['http']}
-iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port ${flags['https']}
-iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${flags['http']} -m mark --mark 1 -j ACCEPT
-iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${flags['https']} -m mark --mark 1 -j ACCEPT
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port ${flags[http]}
+iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port ${flags[https]}
+iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${flags[http]} -m mark --mark 1 -j ACCEPT
+iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${flags[https]} -m mark --mark 1 -j ACCEPT
