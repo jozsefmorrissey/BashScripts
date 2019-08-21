@@ -3,7 +3,7 @@
 # Author: https://serverfault.com/users/35520/misha
 # Location: https://serverfault.com/questions/112795/how-to-run-a-server-on-port-80-as-a-normal-user-on-linux
 httpSrouteDir=$(dirname "${BASH_SOURCE[0]}")
-httpSrouteDir=$(realpath $mcRelDir)
+httpSrouteDir=$(realpath $httpSrouteDir)
 source ${httpSrouteDir}/commandParser.sh;
 
 iptables -t mangle -A PREROUTING -p tcp --dport 80 -j MARK --set-mark 1
