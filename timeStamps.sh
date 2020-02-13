@@ -4,7 +4,7 @@ timeStampRelDir=$(dirname "${BASH_SOURCE[0]}")
 timeStampRelDir=$(realpath $timeStampRelDir)
 source ${timeStampRelDir}/debugLogger.sh;
 
-rootDir=/home/jozsef/Videos/
+rootDir=/home/$USER/Videos/
 detailSize=32
 timeSize=8
 
@@ -148,5 +148,5 @@ else
   save
 fi
 
-# mc run vidTimeStamp 'exit'
-# mc kill vidTimeStamp
+mc run vidTimeStamp 'exit'
+mc kill vidTimeStamp
