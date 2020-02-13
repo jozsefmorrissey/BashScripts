@@ -14,12 +14,11 @@ templateFile="templates.properties"
 originDirFile="origin.properties"
 pidFile="pid.properties"
 
+
 cmd=$1
 shift
 name=$1
 shift
-
-echo Name: $name
 
 if [ -z "$name" ] && [ "$cmd" != "install" ] && [ "$cmd" != "templates" ] && [ "$cmd" != "reset"]
 then
@@ -95,7 +94,7 @@ getValue() {
 runWithTargetTerm() {
   id=$1
   shift
-  target_term run $id "$@"
+  target_term.py run $id "$@"
 }
 
 killTargetTerm() {
@@ -105,7 +104,7 @@ killTargetTerm() {
   if [ ! -z "$termId" ]
   then
     Logger debug "TermID: $termId"
-    target_term kill $termId
+    target_term.py kill $termId
     save "" $processFile
   fi
 }
@@ -115,8 +114,8 @@ init() {
   termId=$(getValue $processFile)
   if [ "${booleans[t]}" == "true" ] && [ -z "$termId" ]
   then
-    target_term add 1
-    termId=$(target_term count)
+    target_term.py add 1
+    termId=$(target_term.py count)
     save $termId $processFile
   fi
 }
@@ -124,18 +123,18 @@ init() {
 # ----------------------------- Command functions ------------------------------
 help() {
   echo 'Run commands in a named shell use -t at end, or -t: anywhere to open a terminal.'
-  echo 'mc run $NAME [COMMANDS]'
-  echo 'mc watch $NAME'
-  echo 'mc kill $NAME'
-  echo 'mc restart $NAME'
-  echo 'mc start $NAME'
-  echo 'mc clear $NAME'
-  echo 'mc reset $NAME'
-  echo 'mc ls $NAME'
-  echo 'mc cd $NAME'
-  echo 'mc templates'
-  echo 'mc template -od $OriginDirectory $NAME [COMMANDS]'
-  echo 'mc install'
+  echo -e "mc run \$NAME [COMMANDS]\n\truns the given commands in the named window"
+  echo -e "mc watch \$NAME\n\topens a output watcher for the given window"
+  echo -e "mc kill \$NAME\n\tkills all the processes connected to the given id"
+  echo -e "mc start \$NAME\n\treruns template commands"
+  echo -e "mc restart \$NAME\n\tkills & starts"
+  echo -e "mc reset \$NAME\n\t removes processes associations without killing"
+  echo -e "mc clear \$NAME\n\tclears the log"
+  echo -e "mc ls \$NAME\n\truns ls and prints output to current window"
+  echo -e "mc cd \$NAME\n\truns cd in target window"
+  echo -e "mc templates\n\tprints templates"
+  echo -e "mc template -od \$OriginDirectory \$NAME [COMMANDS]\n\tcreates a template"
+  echo -e "mc install\n\tinstalls on and initializes your computer"
 }
 
 pidReg='^[0-9]{1,}$'
@@ -241,8 +240,14 @@ CD() {
 install() {
   echo "bash $mcRelDir/mc.sh \"\$@\"" > /usr/bin/mc
   sudo chmod +x /usr/bin/mc
+  echo "$mcRelDir/target_term.py \"\$@\"" > /usr/bin/target_term.py
+  sudo chmod +x /usr/bin/target_term.py
   mkdir -p ${mcDataDir}
-  touch ${mcDataDir}/processes.properties ${mcDataDir}/directories.properties
+  touch $mcDataDir/$processFile
+  touch $mcDataDir/$dirFile
+  touch $mcDataDir/$templateFile
+  touch $mcDataDir/$originDirFile
+  touch $mcDataDir/$pidFile
 }
 
 LS() {

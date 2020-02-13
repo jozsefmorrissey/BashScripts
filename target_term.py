@@ -6,16 +6,29 @@ import sys
 import time
 import getpass
 #--- set your terminal below
-application = "gnome-terminal"
+applications = ["mate-terminal", "gnome-terminal"]
+application = "";
 #---
 
 option = sys.argv[1]
 data = os.environ["HOME"]+"/.opsc/target_term/.term_list"
 pidDir = os.environ["HOME"]+"/.opsc/target_term/pids/"
 
+def getApplication():
+    for termApp in applications:
+        try:
+            return termApp
+        except:
+            if (termApp == applications[-1]):
+                raise Exception('Open new terminal command not found. ' +
+                    "Please modify the applications array in the " +
+                    "target_term.py script to include a suitable command for " +
+                    "your device")
+
 def current_windows():
     w_list = subprocess.check_output(["wmctrl", "-lp"]).decode("utf-8")
     w_lines = [l for l in w_list.splitlines()]
+    application = getApplication()
     try:
         pid = subprocess.check_output(["pgrep", application]).decode("utf-8").strip()
         return [l for l in w_lines if str(pid) in l]
@@ -24,6 +37,7 @@ def current_windows():
 
 def arr_windows(n):
     w_count1 = current_windows()
+    application = getApplication()
     for requested in range(n):
         subprocess.Popen([application])
     called = []
