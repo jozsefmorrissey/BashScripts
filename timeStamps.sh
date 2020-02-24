@@ -136,7 +136,8 @@ calcRelitiveTime
 if [ -z "$stampName" ]
 then
   init
-  guvcview --video_timer=999999999 --video=$timeStampDir/webcam.mkv &
+  guvcview --video_timer=999999999 --video=$timeStampDir/webcam.mkv --audio_device=2 &
+  # simplescreenrecorder --start-recordin &
   simplescreenrecorder --input_profile=AllScreens --output_profile=mp4 --output_file=$timeStampDir/screenrec.mp4 --record_on_start &
   xdg-open $timeStampDir &
   stampName='Start Time'
@@ -147,6 +148,3 @@ then
 else
   save
 fi
-
-mc run vidTimeStamp 'exit'
-mc kill vidTimeStamp
