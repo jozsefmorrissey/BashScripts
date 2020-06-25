@@ -71,6 +71,17 @@ clearPids() {
   save "" "$pidFile"
 }
 
+cleanPids() {
+  getPids
+  clearPids
+  for pid in ${pidArray[@]}
+  do
+    if kill -0 $pid > /dev/null 2>&1; then
+      appendPid $pid
+    fi
+  done
+}
+
 appendPid() {
   getPids
   pids=$(printf "%s," "${pidArray[@]}")
@@ -157,6 +168,7 @@ run() {
     cd "$ogDir"
     pid=$!
     Logger debug "Process Name: $name PID:$pid"
+    cleanPids
     appendPid $pid
   fi
 }
@@ -168,6 +180,7 @@ watch() {
 
 KILL() {
   Logger trace
+  cleanPids
   killTargetTerm
   getPids
   for pid in ${pidArray[@]}

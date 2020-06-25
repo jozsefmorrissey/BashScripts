@@ -30,7 +30,16 @@ Logger () {
   if [ ! -z $level ] && [ ! -z $debugLevel ] && [ $level -le $debugLevel ]
   then
     callerInfo=$(caller 0)
-    (>&2 echo -e "[$levelId] $callerInfo - $2")
+    log="[$levelId] $callerInfo - $2"
+    (>&2 echo -e "$log")
+    debuggui log "$log"
+  fi
+}
+
+ifDebugging () {
+  if (( debugLevel > 1 ))
+  then
+    eval "$1"
   fi
 }
 

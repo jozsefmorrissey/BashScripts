@@ -14,8 +14,11 @@ eval declare -A $booleanArrayName
 
 args=()
 
-while [ "$1" ];
+currentIndex=0
+terminationIndex=$#
+while (( currentIndex < terminationIndex ));
 do
+    let "currentIndex+=1"
     arg=$1
     if [ "${1:0:1}" == "-" ]
     then
