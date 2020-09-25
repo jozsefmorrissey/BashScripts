@@ -5,8 +5,10 @@ timeStampRelDir=$(realpath $timeStampRelDir)
 source ${timeStampRelDir}/debugLogger.sh;
 
 rootDir=/home/$USER/Videos/
+datePathFile=${rootDir}datePath.txt
 detailSize=32
 timeSize=8
+topic=
 
 definitSize() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
@@ -61,37 +63,10 @@ convertToRelTime() {
   echo "$h:$m:$s"
 }
 
-findTimeStampFile() {
-  Logger trace "$(sepArguments "Argurments: " ", " "$@")"
-  count=1
-  Logger debug "initial: $count"
-  for dir in $1/*/;
-  do
-    dirName=$(echo $dir | sed 's/.*\([0-9]\)\/$/\1/')
-    Logger debug "dir: $count - $dir | $dirName"
-    if [ "$dirName" != "$dir" ]
-    then
-      let "count+=1"
-      Logger debug "increment: $count - $dir"
-    fi
-  done
-  if [ ! -z "$2" ]
-  then
-    let "count-=1"
-  fi
-  echo $count
-}
 datePath=
-setDatePath() {
+getDatePath() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
-  datePathFile=${rootDir}datePath.txt
-  if [ ! -z "$stampName" ]
-  then
-    datePath=$(cat $datePathFile)
-  else
-    datePath=`date +%Y/%m/%d`
-    echo $datePath > $datePathFile
-  fi
+  datePath=$(cat $datePathFile)
 }
 
 save() {
@@ -103,48 +78,79 @@ save() {
 
 init() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
-  mkdir -p $timeStampDir
+  mkdir -p $targetDir
   touch $timeStampFile
 }
 
 calcRelitiveTime() {
   Logger trace "$(sepArguments "Argurments: " ", " "$@")"
   local startTimeStr=$(head -1 "$timeStampFile" 2>/dev/null  | sed 's/.*|\(.*\)/\1/')
-  local startTime=$(date +%s -d "$startTimeStr")
-  local currTime=$(date +%s)
-  let "relSec=$currTime - $startTime"
-  relTime=$(convertToRelTime $relSec)
+  if [ -z "$startTimeStr" ]
+  then
+    relTime='00:00:00'
+  else
+    local startTime=$(date +%s -d "$startTimeStr")
+    local currTime=$(date +%s)
+    let "relSec=$currTime - $startTime"
+    relTime=$(convertToRelTime $relSec)
+  fi
 }
 
-echo -n "Enter time stamp name: "
-read stampName
+determinePath() {
+  getDatePath
 
-if [ -z "$stampName" ]
-then
-  stampName="$@"
-fi
-setDatePath
+  targetDir=$rootDir$datePath
+  mkdir -p $targetDir
 
-targetDir=$rootDir$datePath
-mkdir -p $targetDir
+  timeStampFile=${targetDir}/timeStamps.txt
+  calcRelitiveTime
+}
 
-timeStampDir="$targetDir/$(findTimeStampFile "$targetDir" "$stampName")"
-timeStampFile=$timeStampDir/timeStamps.txt
-
-calcRelitiveTime
-
-if [ -z "$stampName" ]
-then
+startRecording() {
+  echo -n "Enter topic name: "
+  read topic
+  echo "'$topic'"
+  datePath=`date +%Y/%m/%d`"/$topic"
+  echo $datePath > $datePathFile
+  echo -e "\n\n$topic\n\n"
+  determinePath
   init
-  guvcview --video_timer=999999999 --video=$timeStampDir/webcam.mkv --audio_device=2 &
+  guvcview --video_timer=999999999 --video=$targetDir/webcam.mkv --audio_device=2 &
   # simplescreenrecorder --start-recordin &
-  simplescreenrecorder --input_profile=AllScreens --output_profile=mp4 --output_file=$timeStampDir/screenrec.mp4 --record_on_start &
-  xdg-open $timeStampDir &
+  echo "simplescreenrecorder --input_profile=AllScreens --output_profile=mp4 --output_file=$targetDir/screenrec.mp4 --record_on_start &"
+  simplescreenrecorder --input_profile=AllScreens --output_profile=mp4 --output_file=$targetDir/screenrec.mp4 --record_on_start &
+  xdg-open $targetDir &
   stampName='Start Time'
   save
-elif [ "open" == "$stampName" ]
-then
-  xdg-open $timeStampDir &
-else
+}
+
+openFileSystem () {
+  determinePath
+  xdg-open $targetDir &
+}
+
+saveTimeStamp () {
+  if [ -z "$stampName" ]
+  then
+    stampName="$@"
+  fi
+
+  determinePath
   save
+}
+
+
+if [ -z "$(pgrep guvcview)" ]
+then
+  startRecording
+else
+  echo -n "Enter time stamp name (open to open Directory): "
+  read stampName
+  if [ "open" == "$stampName" ]
+  then
+    echo openning
+    openFileSystem
+  else
+    saveTimeStamp
+  fi
 fi
