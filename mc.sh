@@ -3,6 +3,8 @@ mcRelDir=$(dirname "${BASH_SOURCE[0]}")
 mcRelDir=$(realpath $mcRelDir)
 source ${mcRelDir}/debugLogger.sh;
 
+echo $1
+
 mcDataDir=~/.opsc/mc
 mkdir -p $mcDataDir/logs
 internalPrefix="internalProp._"
@@ -20,7 +22,15 @@ shift
 name=$1
 shift
 
-if [ -z "$name" ] && [ "$cmd" != "install" ] && [ "$cmd" != "templates" ] && [ "$cmd" != "reset"]
+exitCmd=
+
+if [ -z "$name" ] && [ "$cmd" == "run" ]
+then
+  name=$(pwgen 30 1)
+  exitCmd=' && exit'
+fi
+
+if [ -z "$name" ] && [ "$cmd" != "run" ] && [ "$cmd" != "install" ] && [ "$cmd" != "templates" ] && [ "$cmd" != "reset"]
 then
   echo "-name Must be defined"
   exit
@@ -105,6 +115,7 @@ getValue() {
 runWithTargetTerm() {
   id=$1
   shift
+  Logger debug "$@"
   target_term.py run $id "$@"
 }
 
@@ -135,6 +146,7 @@ init() {
 help() {
   echo 'Run commands in a named shell use -t at end, or -t: anywhere to open a terminal.'
   echo -e "mc run \$NAME [COMMANDS]\n\truns the given commands in the named window"
+  echo -e "mc run \"\" [COMMANDS]\n\truns the given commands in an anonymous window"
   echo -e "mc watch \$NAME\n\topens a output watcher for the given window"
   echo -e "mc kill \$NAME\n\tkills all the processes connected to the given id"
   echo -e "mc start \$NAME\n\treruns template commands"
@@ -157,14 +169,14 @@ run() {
   then
     cd=$(getDirectory)
     runWithTargetTerm $termId "cd $cd"
-    Logger debug runWithTargetTerm $termId "$@"
-    runWithTargetTerm $termId "$@"
+    Logger debug runWithTargetTerm $termId "$@$exitCmd"
+    runWithTargetTerm $termId "$@$exitCmd"
   else
     echo "$(getDirectory)> $@" &>> $(getLog)
     ogDir=$(pwd)
     cd "$(getDirectory)"
     Logger info "Exicute Cmd: $@ &"
-    eval "$@ &>> \"$(getLog)\" &"
+    eval "$@$exitCmd &>> \"$(getLog)\" &"
     cd "$ogDir"
     pid=$!
     Logger debug "Process Name: $name PID:$pid"
