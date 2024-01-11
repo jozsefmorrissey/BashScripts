@@ -1,8 +1,9 @@
 
 if [ "$1" == '-scope' ]
 then
-  flagArrayName=$2Flags
-  booleanArrayName=$2Booleans
+  flagArrayName="${2}Flags"
+  booleanArrayName="${2}Booleans"
+  scoped=true
   shift
   shift
 else
@@ -26,8 +27,18 @@ do
       rev=$(echo "$arg" | rev)
       if [ -z "$1" ] || [ "${1:0:1}" == "-" ] || [ "${rev:0:1}" == ":" ]
       then
-        bool=$(echo ${arg:1} | sed s/://g)
-        eval $booleanArrayName[\$bool]=true
+        if [ "${arg:1:1}" == '-' ]
+        then
+          bool=$(echo ${arg:2} | sed s/://g)
+          eval $booleanArrayName[\$bool]=true
+        else
+          str=$(echo "${arg:1}" | sed s/://g)
+          for ((i=0; i < ${#str}; i++));
+          do
+            char=${str:i:1};
+            eval $booleanArrayName[\$char]=true
+          done
+        fi
       else
         value=$1
         eval $flagArrayName[\${arg:1}]=\$value
@@ -63,4 +74,10 @@ boolStr() {
   echo $str
 }
 
-set -- "${@:1:}" "${args[@]}"
+if [ scoped ]
+then
+  eval declare -A 'arguments'
+  arguments=${args[@]};
+else
+  set -- "${@:1:}" "${args[@]}"
+fi
