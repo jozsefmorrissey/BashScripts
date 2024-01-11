@@ -3,7 +3,9 @@ if [ "$1" == '-scope' ]
 then
   flagArrayName="${2}Flags"
   booleanArrayName="${2}Booleans"
-  scoped=true
+  scopedArgName="${2}Args";
+  echo "first $scopedArgName"
+  eval declare -A $scopedArgName
   shift
   shift
 else
@@ -12,6 +14,7 @@ else
 fi
 eval declare -A $flagArrayName
 eval declare -A $booleanArrayName
+
 
 args=()
 
@@ -74,10 +77,9 @@ boolStr() {
   echo $str
 }
 
-if [ scoped ]
+if [ scopedArgName ]
 then
-  eval declare -A 'arguments'
-  arguments=${args[@]};
+  eval "$scopedArgName=\${args[@]}"
 else
   set -- "${@:1:}" "${args[@]}"
 fi
