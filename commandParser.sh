@@ -1,11 +1,8 @@
 
 if [ "$1" == '-scope' ]
 then
-  flagArrayName="${2}Flags"
-  booleanArrayName="${2}Booleans"
-  scopedArgName="${2}Args";
-  echo "first $scopedArgName"
-  eval declare -A $scopedArgName
+  flagArrayName=$2Flags
+  booleanArrayName=$2Booleans
   shift
   shift
 else
@@ -14,7 +11,6 @@ else
 fi
 eval declare -A $flagArrayName
 eval declare -A $booleanArrayName
-
 
 args=()
 
@@ -28,23 +24,13 @@ do
     then
       shift
       rev=$(echo "$arg" | rev)
-      if [ -z "$1" ] || [ "${1:0:1}" == "-" ] || [ "${rev:0:1}" == ":" ]
+      if [ "${arg:1:1}" != "-" ] && ( [ -z "$1"  ] || [ "${rev:0:1}" == ":" ] )
       then
-        if [ "${arg:1:1}" == '-' ]
-        then
-          bool=$(echo ${arg:2} | sed s/://g)
-          eval $booleanArrayName[\$bool]=true
-        else
-          str=$(echo "${arg:1}" | sed s/://g)
-          for ((i=0; i < ${#str}; i++));
-          do
-            char=${str:i:1};
-            eval $booleanArrayName[\$char]=true
-          done
-        fi
+        bool=$(echo ${arg:1} | sed s/://g)
+        eval $booleanArrayName[\$bool]=true
       else
         value=$1
-        eval $flagArrayName[\${arg:1}]=\$value
+        eval $flagArrayName[\${arg:2}]=\$value
         shift
       fi
     else
@@ -59,7 +45,7 @@ flagStr() {
   do
     if [ -n "$i" ]
     then
-      str+="-$i $(eval echo \${$flagArrayName[$i]}) "
+      str+="--$i $(eval echo \${$flagArrayName[$i]}) "
     fi
   done
   echo $str
@@ -77,9 +63,10 @@ boolStr() {
   echo $str
 }
 
-if [ scopedArgName ]
+if [ scoped ]
 then
-  eval "$scopedArgName=\${args[@]}"
+  eval declare -A 'arguments'
+  arguments=${args[@]};
 else
   set -- "${@:1:}" "${args[@]}"
 fi
